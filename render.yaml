@@ -1,0 +1,28 @@
+services:
+  # Web API Service
+  - type: web
+    name: fpl-api
+    env: node
+    rootDir: fpl-backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: REDIS_URL
+        fromKeyValue:
+          name: telegram fpl app
+          property: connectionString
+
+  # Background Worker Service
+  - type: worker
+    name: fpl-worker
+    env: node
+    rootDir: fpl-backend
+    buildCommand: npm install
+    startCommand: npm run worker
+    plan: free
+    envVars:
+      - key: REDIS_URL
+        fromKeyValue:
+          name: telegram fpl app
+          property: connectionString
