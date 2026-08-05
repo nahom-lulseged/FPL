@@ -10,6 +10,8 @@ Create or synchronize the Render Blueprint from `fpl-backend/render.yaml` (selec
 - `fpl-worker`: the background worker, started with `npm run start:worker`.
 - `fpl-key-value`: the shared managed Redis-compatible service.
 
+The Blueprint currently uses Render's `free` plans so staging and Telegram Mini App testing can proceed without paid Render instances. Free plans are acceptable for early staging only: expect cold starts, sleep behavior, and tighter CPU, memory, and service limits. Before real users or payments, move `fpl-api`, `fpl-worker`, and `fpl-key-value` back to appropriate paid Render plans and redeploy.
+
 Record the backend HTTPS URL, for example `https://fpl-api.onrender.com`. Do not proceed to the frontend configuration until `GET <backend-url>/health` succeeds.
 
 Render only prompts for new `sync: false` values during initial Blueprint creation. If these services already exist, add or update those variables manually in the Render dashboard. Apply the same shared values to both `fpl-api` and `fpl-worker` unless a variable is explicitly web-only.
