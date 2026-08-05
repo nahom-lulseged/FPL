@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, CircleHelp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/common/Modal';
+import { TeamLogo } from '@/components/common/TeamLogo';
 import { CaptainSelector } from '@/components/pitch/CaptainSelector';
 import { FormationSelector } from '@/components/pitch/FormationSelector';
 import { PitchView } from '@/components/pitch/PitchView';
@@ -44,6 +47,7 @@ import type { CreateTeamLineupSlot, LineupSlotInput, SquadEntry, TeamDetail } fr
 import type { Gameweek } from '@/types/gameweek';
 import type { PlayerListItem, Position } from '@/types/player';
 import { useTelegram, useTelegramMainButton } from '@/lib/telegram';
+import { WorkflowDeadlineLine, WorkflowHeader } from '@/components/team/TeamWorkflowUi';
 
 interface SquadBuilderViewProps {
   onTeamCreated: () => void;
@@ -64,22 +68,6 @@ const METRIC_LABELS: Record<SquadMetric, string> = {
   fdr: 'FDR',
   ownership: 'Ownership',
 };
-
-function formatDeadlineLine(gameweek?: Gameweek | null): string {
-  if (!gameweek) {
-    return 'Gameweek 1  •  Deadline pending';
-  }
-
-  const deadline = new Intl.DateTimeFormat(undefined, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(gameweek.deadline));
-
-  return `Gameweek ${gameweek.number}  •  Deadline: ${deadline}`;
-}
 
 function toCreateLineup(lineup: StoreLineup): CreateTeamLineupSlot[] {
   return lineup.map((slot) => ({
@@ -169,6 +157,7 @@ function applyAutoPickedSquad(players: PlayerListItem[], formation: Formation) {
 }
 
 export function SquadBuilderView({ selectedGameweek, onTeamCreated }: SquadBuilderViewProps) {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const createTeamMutation = useCreateTeam();
   const toast = useToast();
@@ -411,36 +400,16 @@ export function SquadBuilderView({ selectedGameweek, onTeamCreated }: SquadBuild
       ) : null}
 
       <section
-        className="fpl-surface-panel squad-builder-workspace relative min-w-0"
+        className="fpl-surface-panel squad-builder-workspace create-team-reference relative min-w-0"
         aria-labelledby="squad-builder-title"
       >
-        <button
-          type="button"
-          className="absolute right-5 top-5 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-transparent text-2xl font-black text-white transition hover:bg-white/5"
-          aria-label="Squad builder help"
-          onClick={() => setHelpOpen(true)}
-        >
-          ?
-        </button>
-
-        <div className="pr-14">
-          <div className="min-w-0 flex-1">
-            <h2
-              id="squad-builder-title"
-              className="squad-builder-heading tracking-tight text-white"
-            >
-              Squad Selection
-            </h2>
-            <p className="squad-builder-copy mt-2 max-w-[58rem]">
-              Select a maximum of 3 players from a single team or &apos;Auto Pick&apos; if
-              you&apos;re short of time.
-            </p>
-          </div>
-        </div>
-
-        <p className="mt-7 text-center text-base font-extrabold text-white">
-          {formatDeadlineLine(selectedGameweek)}
-        </p>
+        <WorkflowHeader
+          title="Create Team"
+          titleId="squad-builder-title"
+          leading={<button type="button" className="pick-team-header-action" aria-label="Back" onClick={() => navigate('/team')}><ArrowLeft /></button>}
+          trailing={<button type="button" className="workflow-brand-action" aria-label="Squad builder help" onClick={() => setHelpOpen(true)}><TeamLogo decorative eager /><CircleHelp /></button>}
+        />
+        <WorkflowDeadlineLine gameweek={selectedGameweek} fallbackNumber={1} />
 
         <div className="mt-8 grid gap-7 border-b border-white/12 pb-9 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
           <SquadBuilderIdentity />

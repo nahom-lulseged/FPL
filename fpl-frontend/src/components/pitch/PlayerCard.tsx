@@ -305,6 +305,7 @@ export function PlayerCard({
         className={clsx(
           'relative flex w-[4.9rem] flex-col overflow-hidden rounded-xl text-center transition transition-shadow hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/30 sm:w-[5.25rem]',
           builderMode && 'squad-builder-player-card',
+          builderMode && position && `player-position-${position.toLowerCase()}`,
           isEmpty && 'min-h-[6.5rem] border border-dashed border-white/30 bg-white/5 shadow-inner',
           !isEmpty && 'border border-black/10 bg-[#0d7a47]/45 shadow-md shadow-black/20',
           variant === 'active' &&

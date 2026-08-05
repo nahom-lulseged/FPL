@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { screen } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
@@ -77,6 +77,7 @@ describe('PlayerSelectionModal', () => {
 
     expect(screen.getByRole('heading', { name: 'Player Selection' })).toBeInTheDocument();
     expect(screen.getByLabelText('Find a player')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toHaveClass('player-selection-dialog');
   });
 
   it('does not render when closed', () => {
@@ -132,5 +133,33 @@ describe('PlayerSelectionModal', () => {
 
     await user.click(screen.getByRole('button', { name: 'Close' }));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('keeps keyboard focus inside the full-screen player picker', () => {
+    render(
+      <PlayerSelectionModal
+        open
+        activePosition="MID"
+        activeSlotIndex={0}
+        selectedPlayers={[]}
+        onAdd={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const dialog = screen.getByRole('dialog');
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+    const first = focusable[0];
+    const last = focusable.at(-1);
+
+    expect(first).toBeDefined();
+    expect(last).toBeDefined();
+    last?.focus();
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(first).toHaveFocus();
   });
 });

@@ -24,17 +24,17 @@ function HeaderStat({
   variant: 'players' | 'bank';
 }) {
   return (
-    <div className="text-center">
+    <div className={`squad-summary-stat squad-summary-stat--${variant} text-center`}>
       <div
         className={
           variant === 'players'
-            ? 'min-w-[6rem] rounded-lg bg-[#E90052] px-3 py-2.5 text-2xl font-black leading-none text-white sm:min-w-[6.6rem]'
-            : 'min-w-[6rem] rounded-lg bg-[#00FF87] px-3 py-2.5 text-2xl font-black leading-none text-[#37003c] sm:min-w-[6.6rem]'
+            ? 'squad-summary-stat__value min-w-[6rem] rounded-lg px-3 py-2.5 text-2xl font-black leading-none text-white sm:min-w-[6.6rem]'
+            : 'squad-summary-stat__value min-w-[6rem] rounded-lg px-3 py-2.5 text-2xl font-black leading-none text-[#07130d] sm:min-w-[6.6rem]'
         }
       >
         {value}
       </div>
-      <p className="mt-2 text-base text-[#d5c0df]">{label}</p>
+      <p className="mt-2 text-base text-[var(--premium-text-secondary)]">{label}</p>
     </div>
   );
 }

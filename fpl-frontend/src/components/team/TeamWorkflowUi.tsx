@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { CalendarDays, type LucideIcon } from 'lucide-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { Gameweek } from '@/types/gameweek';
 import { formatWorkflowDeadline } from './teamWorkflowFormatting';
 
@@ -82,16 +82,38 @@ export function WorkflowSegmentedControl<T extends string>({
   label: string;
   onChange: (value: T) => void;
 }) {
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const lastIndex = options.length - 1;
+    const nextIndex = event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? lastIndex
+        : event.key === 'ArrowRight'
+          ? (index + 1) % options.length
+          : (index - 1 + options.length) % options.length;
+    const nextOption = options[nextIndex];
+    if (!nextOption) return;
+    onChange(nextOption.value);
+    tabRefs.current[nextIndex]?.focus();
+  };
+
   return (
     <div className="fpl-segmented" role="tablist" aria-label={label}>
-      {options.map((option) => (
+      {options.map((option, index) => (
         <button
           key={option.value}
+          ref={(node) => { tabRefs.current[index] = node; }}
           type="button"
           role="tab"
           aria-selected={value === option.value}
+          tabIndex={value === option.value ? 0 : -1}
           className={value === option.value ? 'is-active' : undefined}
           onClick={() => onChange(option.value)}
+          onKeyDown={(event) => handleKeyDown(event, index)}
         >
           {option.label}
         </button>

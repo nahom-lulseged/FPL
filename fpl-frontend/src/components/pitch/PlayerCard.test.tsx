@@ -286,6 +286,13 @@ describe('PlayerCard (shirt layout)', () => {
     expect(document.querySelector('.player-card-status-badge')).not.toBeInTheDocument();
   });
 
+  it('exposes a scoped position accent class in builder mode', () => {
+    const { container } = render(
+      <PlayerCard variant="filled" layout="shirt" builderMode name="Salah" shortName="LIV" position={MID} />,
+    );
+    expect(container.querySelector('.squad-builder-player-card')).toHaveClass('player-position-mid');
+  });
+
   it('anchors captaincy inside the jersey wrapper and suppresses it on the bench', () => {
     const { container, rerender } = render(
       <PlayerCard variant="filled" layout="shirt" name="Salah" shortName="LIV" position={MID} isStarter isCaptain />,

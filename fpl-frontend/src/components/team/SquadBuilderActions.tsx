@@ -31,7 +31,7 @@ export function SquadBuilderActions({
   const submitLabel =
     selectedCount < SQUAD_SIZE
       ? `Select 15 players (${selectedCount}/${SQUAD_SIZE})`
-      : 'Enter Squad';
+      : 'Save Team';
 
   return (
     <div className="grid w-full grid-cols-2 items-center gap-3 pt-2 sm:grid-cols-[1fr_auto_1.15fr]">

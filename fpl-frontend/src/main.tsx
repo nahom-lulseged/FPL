@@ -5,6 +5,7 @@ import { App } from '@/App';
 import 'lenis/dist/lenis.css';
 import '@/styles/globals.css';
 import '@/styles/premium.css';
+import '@/styles/workflows.css';
 import '@/lib/i18n';
 import { TelegramProvider } from '@/lib/telegram';
 

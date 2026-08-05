@@ -101,12 +101,21 @@ vi.mock('@/components/pitch/PitchView', () => ({
     squad,
     onPlayerActivate,
     playerDisplayValues,
+    builderMode,
   }: {
     squad: SquadEntry[];
     onPlayerActivate?: (playerId: string) => void;
     playerDisplayValues?: Map<string, string>;
+    builderMode?: boolean;
   }) => (
     <div>
+      {builderMode ? (
+        <div className="pitch-brand-strip" aria-hidden="true">
+          <img className="fpl-team-logo-image" alt="" />
+          <span />
+          <img className="fpl-team-logo-image" alt="" />
+        </div>
+      ) : null}
       {squad.map((entry) => (
         <button key={entry.playerId} type="button" onClick={() => onPlayerActivate?.(entry.playerId)}>
           {entry.player.name} {playerDisplayValues?.get(entry.playerId)}
@@ -275,11 +284,18 @@ describe('SavedTeamView official workflow', () => {
   });
 
   it('shows the requested detailed columns in list view', () => {
-    renderView();
+    const { container } = renderView();
     fireEvent.click(screen.getByRole('tab', { name: 'List' }));
     expect(screen.getByText('Form')).toBeInTheDocument();
     expect(screen.getByText('Current Price')).toBeInTheDocument();
     expect(screen.getByText('Selected')).toBeInTheDocument();
+    expect(container.querySelector('.fpl-saved-list-row')?.children).toHaveLength(6);
+  });
+
+  it('renders both constrained Fantasy Ethiopia pitch-banner logos', () => {
+    const { container } = renderView();
+    fireEvent.click(screen.getByRole('tab', { name: 'Pitch' }));
+    expect(container.querySelectorAll('.pitch-brand-strip .fpl-team-logo-image')).toHaveLength(2);
   });
 
   it('opens and confirms each pick-team chip from the drawer', async () => {

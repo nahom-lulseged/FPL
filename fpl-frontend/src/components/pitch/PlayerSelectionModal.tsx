@@ -33,7 +33,7 @@ export function PlayerSelectionModal({
       title="Player Selection"
       placement="bottom"
       hideTitle
-      className="!max-w-xl"
+      className="player-selection-dialog !max-w-xl"
     >
       <PlayerSelectionPanel
         key={`${activePosition}-${activeSlotIndex}`}
