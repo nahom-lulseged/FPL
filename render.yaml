@@ -9,9 +9,7 @@ services:
     plan: free
     envVars:
       - key: REDIS_URL
-        fromKeyValue:
-          name: telegram fpl app
-          property: connectionString
+        sync: false
 
   # Background Worker Service
   - type: worker
@@ -23,6 +21,4 @@ services:
     plan: free
     envVars:
       - key: REDIS_URL
-        fromKeyValue:
-          name: telegram fpl app
-          property: connectionString
+        sync: false
