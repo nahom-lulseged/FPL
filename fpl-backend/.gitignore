@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.log
+backups/
+.redis-local/
+tests/.test-env.json
+tests/.pg-data/

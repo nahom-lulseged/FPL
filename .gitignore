@@ -1,0 +1,30 @@
+# Secrets — never commit
+**/.env
+.env
+.env.*
+!**/.env.example
+!**/.env.*.example
+
+# Dependencies & build output
+**/node_modules/
+**/dist/
+**/.vite/
+**/.redis-local/
+
+# Local Codex/editor artifacts
+.codex-run-logs/
+.cursor/
+**/.codex-logs/
+**/.codex-test-results.json
+**/.vscode/
+Untitled
+
+# Generated archives, logs, and reports
+**/*.zip
+**/*.log
+**/lighthouse-*.json
+**/test-results-*.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db

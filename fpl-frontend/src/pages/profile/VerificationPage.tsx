@@ -1,0 +1,9 @@
+import { Check, ChevronRight, IdCard, Phone, ScrollText, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { PremiumCard } from '@/components/common/PremiumCard';
+
+export function VerificationPage() {
+  return <div className="page-stack verification-page"><header className="page-intro"><div><p className="eyebrow">SECURE MONEY FEATURES</p><h1>Verification</h1><p>Complete each tier to unlock paid leagues and withdrawals.</p></div></header><PremiumCard className="verification-progress"><div><span>2 of 3 complete</span><strong>Account security</strong></div><div className="hero-progress"><span style={{ width: '66%' }} /></div></PremiumCard><div className="verification-steps"><VerificationStep icon={Phone} title="Phone number" detail="Required for paid leagues and Telebirr" status="complete" /><VerificationStep icon={ScrollText} title="Terms and age" detail="Confirm eligibility for prize contests" status="complete" /><VerificationStep icon={IdCard} title="Identity verification" detail="Required before your first withdrawal" status="action" /></div><PremiumCard className="verification-note"><ShieldCheck size={20} /><p>Your documents are encrypted and only visible to authorized verification staff.</p></PremiumCard><Link to="/wallet/kyc" className="neo-button">Continue verification <ChevronRight size={18} /></Link></div>;
+}
+function VerificationStep({ icon: Icon, title, detail, status }: { icon: typeof Phone; title: string; detail: string; status: 'complete' | 'action' }) { return <PremiumCard className="verification-step"><span><Icon size={20} /></span><div><strong>{title}</strong><small>{detail}</small></div>{status === 'complete' ? <b><Check size={15} /> Complete</b> : <Link to="/wallet/kyc">Start <ChevronRight size={14} /></Link>}</PremiumCard>; }
+

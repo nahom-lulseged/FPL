@@ -1,0 +1,124 @@
+{
+  "info": {
+    "name": "Fantasy Premier League API",
+    "description": "Public FPL API (fantasy.premierleague.com/api). No login required for these GETs.\n\n1. Import docs/postman/fpl-api.postman_environment.json\n2. Select environment \"FPL Public API\"\n3. Run Bootstrap Static first, then Gameweek Picks",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Bootstrap Static",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "User-Agent", "value": "FPL-Clone-Backend/0.1" }
+        ],
+        "url": "{{base_url}}/bootstrap-static/",
+        "description": "Players, teams, events, game settings. Start here to discover gw_id and player_id."
+      }
+    },
+    {
+      "name": "Element Gameweek Live",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "User-Agent", "value": "FPL-Clone-Backend/0.1" }
+        ],
+        "url": "{{base_url}}/event/{{gw_id}}/live/",
+        "description": "Live player points for a gameweek."
+      }
+    },
+    {
+      "name": "Entry Gameweek Live",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "User-Agent", "value": "FPL-Clone-Backend/0.1" }
+        ],
+        "url": "{{base_url}}/entry/{{team_id}}/event/{{gw_id}}/live",
+        "description": "Live scoring for one manager."
+      }
+    },
+    {
+      "name": "Entry Details",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "User-Agent", "value": "FPL-Clone-Backend/0.1" }
+        ],
+        "url": "{{base_url}}/entry/{{team_id}}/",
+        "description": "Manager profile / overall rank."
+      }
+    },
+    {
+      "name": "Entry History",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "User-Agent", "value": "FPL-Clone-Backend/0.1" }
+        ],
+        "url": "{{base_url}}/entry/{{team_id}}/history/",
+        "description": "Season history for an entry."
+      }
+    },
+    {
+      "name": "Entry Transfers",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "User-Agent", "value": "FPL-Clone-Backend/0.1" }
+        ],
+        "url": "{{base_url}}/entry/{{team_id}}/transfers/",
+        "description": "Transfer history for an entry."
+      }
+    },
+    {
+      "name": "Gameweek Picks",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "User-Agent", "value": "FPL-Clone-Backend/0.1" }
+        ],
+        "url": "{{base_url}}/entry/{{team_id}}/event/{{gw_id}}/picks/",
+        "description": "Returns an entry's Gameweek team selection (picks[], entry_history, active_chip)."
+      }
+    },
+    {
+      "name": "Gameweek Fixtures",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "User-Agent", "value": "FPL-Clone-Backend/0.1" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/fixtures/?event={{gw_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["fixtures", ""],
+          "query": [{ "key": "event", "value": "{{gw_id}}" }]
+        },
+        "description": "Fixtures for a gameweek."
+      }
+    },
+    {
+      "name": "Element Summary",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "User-Agent", "value": "FPL-Clone-Backend/0.1" }
+        ],
+        "url": "{{base_url}}/element-summary/{{player_id}}/",
+        "description": "One player's history and fixtures."
+      }
+    },
+    {
+      "name": "League Standings",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "User-Agent", "value": "FPL-Clone-Backend/0.1" }
+        ],
+        "url": "{{base_url}}/leagues-classic/{{league_id}}/standings/",
+        "description": "Classic league table. league_id 314 = Overall."
+      }
+    }
+  ]
+}

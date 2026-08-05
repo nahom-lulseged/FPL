@@ -1,0 +1,10 @@
+import { useState } from 'react';
+import { CheckCircle2, Headphones, Phone, Send, UserRound } from 'lucide-react';
+import { Button } from '@/components/common/Button';
+import { PageHeader } from '@/components/common/PageHeader';
+import { useContactClaims, useResolveContactClaim } from '@/hooks/useCommunications';
+
+export function SupportPage() {
+  const { data = [], isLoading } = useContactClaims(); const resolve = useResolveContactClaim(); const [targets, setTargets] = useState<Record<string,string>>({});
+  return <div className="page-stack"><PageHeader eyebrow="People" title="Telegram support inbox" description="Resolve pending account-link claims against an existing user record."/><div className="glass-card queue-summary"><div className="card-icon green"><Headphones/></div><div><strong>{data.length}</strong><span>pending claim{data.length === 1 ? '' : 's'}</span></div></div><section className="content-grid">{isLoading ? <div className="glass-card skeleton h-48"/> : data.length ? data.map((claim) => <article className="glass-card claim-card" key={claim.id}><div className="claim-head"><div className="avatar-ring">{claim.displayName.charAt(0)}</div><div><h2>{claim.displayName}</h2><p>@{claim.telegramUsername || 'username unavailable'} · Telegram {claim.telegramId}</p></div><span className="status-badge warning">Pending</span></div><div className="claim-details"><span><Phone/> {claim.phoneE164}</span><p>{claim.supportNote}</p><time>{new Date(claim.createdAt).toLocaleString()}</time></div><div className="resolve-row"><div className="field-with-icon"><UserRound/><input aria-label="Target user ID" value={targets[claim.id] ?? ''} onChange={(e) => setTargets((current) => ({...current,[claim.id]:e.target.value}))} placeholder="Existing target user ID"/></div><Button disabled={!targets[claim.id]} isLoading={resolve.isPending} onClick={() => resolve.mutate({ id: claim.id, userId: targets[claim.id] })}><Send className="h-4 w-4"/>Resolve</Button></div></article>) : <div className="glass-card empty-state"><CheckCircle2/><h2>Inbox cleared</h2><p>There are no pending Telegram contact claims.</p></div>}</section></div>;
+}

@@ -1,0 +1,52 @@
+services:
+  - type: web
+    name: fpl-api
+    runtime: node
+    rootDir: fpl-backend
+    region: frankfurt
+    plan: standard
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars: &shared
+      - { key: NODE_ENV, value: production }
+      - { key: NODE_VERSION, value: 22.22.0 }
+      - { key: APP_ENV, sync: false }
+      - { key: DATABASE_URL, sync: false }
+      - { key: REDIS_URL, fromService: { type: keyvalue, name: fpl-key-value, property: connectionString } }
+      - { key: SUPABASE_URL, sync: false }
+      - { key: SUPABASE_PUBLISHABLE_KEY, sync: false }
+      - { key: SUPABASE_SECRET_KEY, sync: false }
+      - { key: CORS_ORIGIN, sync: false }
+      - { key: FRONTEND_URL, sync: false }
+      - { key: PUBLIC_API_URL, sync: false }
+      - { key: SUPPORT_CONTACT_EMAIL, sync: false }
+      - { key: PAYMENT_PROVIDER, sync: false }
+      - { key: PAYMENT_WEBHOOK_SECRET, sync: false }
+      - { key: TELEGRAM_AUTH_ENABLED, sync: false }
+      - { key: TELEGRAM_BOT_TOKEN, sync: false }
+      - { key: TELEGRAM_ALERTS_ENABLED, value: "false" }
+      - { key: TELEGRAM_WEBHOOK_SECRET, sync: false }
+      - { key: TELEBIRR_ENABLED, sync: false }
+      - { key: TELEBIRR_BASE_URL, value: https://developerportal.ethiotelebirr.et:38443/apiaccess/payment/gateway }
+      - { key: TELEBIRR_FABRIC_APP_ID, sync: false }
+      - { key: TELEBIRR_APP_SECRET, sync: false }
+      - { key: TELEBIRR_MERCHANT_APP_ID, sync: false }
+      - { key: TELEBIRR_MERCHANT_CODE, sync: false }
+      - { key: TELEBIRR_PRIVATE_KEY, sync: false }
+      - { key: TELEBIRR_PUBLIC_KEY, sync: false }
+  - type: worker
+    name: fpl-worker
+    runtime: node
+    rootDir: fpl-backend
+    region: frankfurt
+    plan: standard
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npm run start:worker
+    envVars: *shared
+  - type: keyvalue
+    name: fpl-key-value
+    region: frankfurt
+    plan: pro
+    ipAllowList: []
+    maxmemoryPolicy: noeviction

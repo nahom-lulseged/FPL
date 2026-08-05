@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  title: FPL Clone API
+  version: 0.1.0
+  description: Fantasy Premier League clone backend API
+servers:
+  - url: http://localhost:3000
+    description: Local development
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+  /api/auth/telegram/start:
+    post:
+      summary: Exchange verified Telegram Mini App initData for a Supabase-backed session
+      tags: [Auth]
+  /api/auth/refresh:
+    post:
+      summary: Refresh access token
+      tags: [Auth]
+  /api/auth/logout:
+    post:
+      summary: Clear the current session
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+  /api/telegram/webhook:
+    post:
+      summary: Telegram bot webhook for contact-based onboarding
+      tags: [Telegram]
+  /api/me:
+    get:
+      summary: Current user profile
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+  /api/players:
+    get:
+      summary: List players with filters
+      tags: [Players]
+  /api/players/{id}:
+    get:
+      summary: Player detail with upcoming fixtures
+      tags: [Players]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+  /api/fixtures:
+    get:
+      summary: List fixtures
+      tags: [Fixtures]
+  /api/teams:
+    post:
+      summary: Create squad
+      tags: [Teams]
+      security:
+        - bearerAuth: []
+  /api/teams/{id}/transfers:
+    post:
+      summary: Submit transfers
+      tags: [Transfers]
+      security:
+        - bearerAuth: []
+  /api/leagues:
+    post:
+      summary: Create league
+      tags: [Leagues]
+      security:
+        - bearerAuth: []
+  /api/admin/scoring/recalculate/{gameweekId}:
+    post:
+      summary: Commit gameweek recalculation
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+  /api/admin/support/telegram-contact-claims:
+    get:
+      summary: List pending Telegram account-link support claims
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+  /api/admin/support/telegram-contact-claims/{id}/resolve:
+    post:
+      summary: Resolve a Telegram account-link support claim to an existing user
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

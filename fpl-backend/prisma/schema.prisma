@@ -1,0 +1,704 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AuthProvider {
+  EMAIL
+  TELEGRAM
+}
+
+enum NotificationType {
+  DEADLINE
+  WALLET
+  LEAGUE
+  WINNER
+  SYSTEM
+}
+
+enum Position {
+  GK
+  DEF
+  MID
+  FWD
+}
+
+enum ChipType {
+  WILDCARD
+  FREE_HIT
+  BENCH_BOOST
+  TRIPLE_CAPTAIN
+}
+
+enum LeagueType {
+  CLASSIC
+  HEAD_TO_HEAD
+}
+
+enum GameweekStatus {
+  UPCOMING
+  LIVE
+  FINISHED
+}
+
+enum SyncType {
+  ALL
+  TEAMS
+  PLAYERS
+  FIXTURES
+  GAMEWEEKS
+}
+
+enum AlertType {
+  INGESTION_FAILURE
+  QUEUE_BACKUP
+  HIGH_ERROR_RATE
+  LEDGER_MISMATCH
+}
+
+enum WalletType {
+  USER
+  LEAGUE_ESCROW
+  PLATFORM
+}
+
+enum LedgerDirection {
+  CREDIT
+  DEBIT
+}
+
+enum LedgerEntryType {
+  DEPOSIT
+  STAKE_HOLD
+  STAKE_RELEASE
+  PAYOUT
+  COMMISSION
+  REFUND
+  WITHDRAWAL
+}
+
+enum DepositStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  FAILED
+}
+
+enum PayoutStatus {
+  OPEN
+  LOCKED
+  DISTRIBUTED
+}
+
+enum TelegramContactClaimStatus {
+  PENDING
+  RESOLVED
+  CANCELLED
+}
+
+model User {
+  id                      String    @id @default(auto()) @map("_id") @db.ObjectId
+  supabaseAuthId          String?   @unique
+  email                   String?
+  displayName             String
+  displayNameLower        String
+  role                    Role      @default(USER)
+  isSuspended             Boolean   @default(false)
+  suspendedAt             DateTime?
+  suspendedReason         String?
+  termsAcceptedAt         DateTime?
+  ageVerifiedAt           DateTime?
+  kycVerifiedAt           DateTime?
+  kycDocumentRef          String?
+  phoneE164               String?
+  contactSharedAt         DateTime?
+  contactTermsUrl         String?
+  locale                  String    @default("en")
+  onboardingCompletedAt   DateTime?
+  referralCode            String    @unique @default(cuid())
+  badgeConfig             Json?
+  notificationPreferences Json?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  teams             Team[]
+  leagueMemberships LeagueMembership[]
+  auditLogs         AuditLog[]         @relation("AdminAuditLogs")
+  recalculationLogs RecalculationLog[] @relation("AdminRecalculationLogs")
+  wallets           Wallet[]
+  deposits          Deposit[]
+  withdrawals       Withdrawal[]
+  authIdentities    AuthIdentity[]
+  notifications     Notification[]
+  telegramContactClaims TelegramContactClaim[] @relation("ResolvedTelegramContactClaims")
+
+  @@index([displayNameLower])
+  @@index([email])
+  @@index([isSuspended])
+  @@index([createdAt])
+  @@index([phoneE164])
+}
+
+model AuthIdentity {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String       @db.ObjectId
+  provider       AuthProvider
+  subject        String
+  username       String?
+  photoUrl       String?
+  providerData   Json?
+  lastAuthenticatedAt DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, subject])
+  @@index([userId])
+}
+
+model Notification {
+  id        String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String           @db.ObjectId
+  type      NotificationType
+  title     String
+  message   String
+  actionUrl String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+}
+
+model TelegramContactClaim {
+  id                String                     @id @default(auto()) @map("_id") @db.ObjectId
+  telegramId        String
+  telegramUsername  String?
+  displayName       String
+  phoneE164         String
+  status            TelegramContactClaimStatus @default(PENDING)
+  supportNote       String?
+  resolvedToUserId  String?                    @db.ObjectId
+  resolvedByAdminId String?                    @db.ObjectId
+  resolvedAt        DateTime?
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+
+  resolvedToUser User? @relation("ResolvedTelegramContactClaims", fields: [resolvedToUserId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([telegramId, status])
+  @@index([phoneE164, status])
+  @@index([status, createdAt])
+  @@index([resolvedToUserId])
+}
+
+model Announcement {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  message     String
+  actionUrl   String?
+  publishedAt DateTime  @default(now())
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([publishedAt, expiresAt])
+}
+
+model AuditLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId    String   @db.ObjectId
+  action     String
+  targetType String
+  targetId   String
+  beforeJson Json
+  afterJson  Json?
+  createdAt  DateTime @default(now())
+
+  admin User @relation("AdminAuditLogs", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId, createdAt])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+model Team {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  name          String
+  season        String
+  bankBalance   Int      @default(1000)
+  squadValue    Int      @default(0)
+  totalPoints   Int      @default(0)
+  freeTransfers Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user           User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  squad          Squad[]
+  transfers      Transfer[]
+  chipUsages     ChipUsage[]
+  memberships    LeagueMembership[]
+  squadSnapshots SquadGameweekSnapshot[]
+  gameweekScores TeamGameweekScore[]
+
+  @@unique([userId, season])
+  @@index([userId])
+}
+
+model Squad {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  teamId        String   @db.ObjectId
+  playerId      String   @db.ObjectId
+  position      Position
+  isStarter     Boolean  @default(false)
+  benchOrder    Int?
+  isCaptain     Boolean  @default(false)
+  isViceCaptain Boolean  @default(false)
+  acquiredAt    DateTime @default(now())
+
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, playerId])
+  @@index([teamId])
+  @@index([playerId])
+}
+
+model Player {
+  id                     String    @id @default(auto()) @map("_id") @db.ObjectId
+  fplId                  Int?      @unique
+  name                   String
+  nameLower              String
+  position               Position
+  price                  Int
+  realTeamId             String    @db.ObjectId
+  isAvailable            Boolean   @default(true)
+  availabilityStatus     String    @default("a")
+  chanceOfPlayingNextRound Int?
+  totalPoints            Int       @default(0)
+  eventPoints            Int       @default(0)
+  selectedByPercent      Float     @default(0)
+  minutes                Int       @default(0)
+  goalsScored            Int       @default(0)
+  assists                Int       @default(0)
+  cleanSheets            Int       @default(0)
+  goalsConceded          Int       @default(0)
+  ownGoals               Int       @default(0)
+  penaltiesSaved         Int       @default(0)
+  injuryNote             String?
+  isManualOverride       Boolean   @default(false)
+  elementSummarySyncedAt DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  realTeam       RealTeam                @relation(fields: [realTeamId], references: [id], onDelete: Cascade)
+  squadEntries   Squad[]
+  gameweekStats  PlayerGameweekStats[]
+  seasonHistory  PlayerSeasonHistory[]
+  squadSnapshots SquadGameweekSnapshot[]
+  transfersIn    Transfer[]              @relation("TransferIn")
+  transfersOut   Transfer[]              @relation("TransferOut")
+  priceHistory   PlayerPriceHistory[]
+
+  @@index([nameLower])
+  @@index([realTeamId])
+  @@index([position])
+  @@index([price])
+  @@index([totalPoints])
+  @@index([position, price])
+}
+
+model PlayerPriceHistory {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  playerId  String   @db.ObjectId
+  price     Int
+  changedAt DateTime @default(now())
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, changedAt])
+}
+
+model RealTeam {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  fplId            Int?     @unique
+  name             String
+  nameLower        String
+  shortName        String
+  shortNameLower   String
+  crestUrl         String?
+  isManualOverride Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  players      Player[]
+  homeFixtures Fixture[] @relation("HomeTeam")
+  awayFixtures Fixture[] @relation("AwayTeam")
+
+  @@index([nameLower])
+  @@index([shortNameLower])
+}
+
+model Gameweek {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  number           Int            @unique
+  deadline         DateTime
+  status           GameweekStatus @default(UPCOMING)
+  isCurrent        Boolean        @default(false)
+  isManualOverride Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  fixtures          Fixture[]
+  playerStats       PlayerGameweekStats[]
+  transfers         Transfer[]
+  squadSnapshots    SquadGameweekSnapshot[]
+  teamScores        TeamGameweekScore[]
+  recalculationLogs RecalculationLog[]
+
+  @@index([isCurrent])
+}
+
+model RecalculationLog {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  gameweekId    String   @db.ObjectId
+  triggeredBy   String   @db.ObjectId
+  type          String
+  teamsAffected Int
+  deltasJson    Json
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  gameweek Gameweek @relation(fields: [gameweekId], references: [id], onDelete: Cascade)
+  admin    User     @relation("AdminRecalculationLogs", fields: [triggeredBy], references: [id], onDelete: Cascade)
+
+  @@index([gameweekId])
+  @@index([createdAt])
+  @@index([triggeredBy])
+}
+
+model Fixture {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  fplId            Int?     @unique
+  gameweekId       String   @db.ObjectId
+  homeTeamId       String   @db.ObjectId
+  awayTeamId       String   @db.ObjectId
+  kickoffTime      DateTime
+  homeScore        Int?
+  awayScore        Int?
+  homeDifficulty   Int?
+  awayDifficulty   Int?
+  started          Boolean  @default(false)
+  minutes          Int?
+  finished         Boolean  @default(false)
+  isPostponed      Boolean  @default(false)
+  isManualOverride Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  gameweek Gameweek @relation(fields: [gameweekId], references: [id], onDelete: Cascade)
+  homeTeam RealTeam @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
+  awayTeam RealTeam @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+
+  @@index([gameweekId])
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+  @@index([gameweekId, kickoffTime])
+  @@index([gameweekId, finished, kickoffTime])
+}
+
+model PlayerGameweekStats {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  playerId          String   @db.ObjectId
+  gameweekId        String   @db.ObjectId
+  minutes           Int      @default(0)
+  goals             Int      @default(0)
+  assists           Int      @default(0)
+  cleanSheet        Boolean  @default(false)
+  goalsConceded     Int      @default(0)
+  saves             Int      @default(0)
+  yellowCards       Int      @default(0)
+  redCards          Int      @default(0)
+  ownGoals          Int      @default(0)
+  penaltiesMissed   Int      @default(0)
+  penaltiesSaved    Int      @default(0)
+  bonus             Int      @default(0)
+  bps               Int      @default(0)
+  points            Int      @default(0)
+  provisionalBonus  Int?
+  wasHome           Boolean?
+  opponentTeamFplId Int?
+  fixtureFplId      Int?
+  value             Int?
+
+  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  gameweek Gameweek @relation(fields: [gameweekId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, gameweekId])
+  @@index([gameweekId])
+}
+
+model PlayerSeasonHistory {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  playerId    String   @db.ObjectId
+  seasonName  String
+  startCost   Int
+  endCost     Int
+  totalPoints Int      @default(0)
+  minutes     Int      @default(0)
+  goalsScored Int      @default(0)
+  assists     Int      @default(0)
+  cleanSheets Int      @default(0)
+  influence   Float?
+  creativity  Float?
+  threat      Float?
+  ictIndex    Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, seasonName])
+  @@index([playerId])
+}
+
+model League {
+  id                   String       @id @default(auto()) @map("_id") @db.ObjectId
+  name                 String
+  nameLower            String
+  type                 LeagueType
+  inviteCode           String       @unique
+  adminUserId          String       @db.ObjectId
+  season               String
+  stakeAmountMinor     Int?
+  isPrivate            Boolean      @default(false)
+  potTotalMinor        Int          @default(0)
+  payoutStatus         PayoutStatus @default(OPEN)
+  payoutSplitConfig    Json?
+  isPlatformWeekly     Boolean      @default(false)
+  joinDeadline         DateTime?
+  maxEntrants          Int?
+  guaranteedPrizeMinor Int?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  memberships   LeagueMembership[]
+  escrowWallets Wallet[]
+
+  @@index([nameLower])
+  @@index([season])
+  @@index([isPrivate, stakeAmountMinor])
+  @@index([payoutStatus])
+}
+
+model LeagueMembership {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  leagueId String   @db.ObjectId
+  userId   String   @db.ObjectId
+  teamId   String   @db.ObjectId
+  joinedAt DateTime @default(now())
+
+  league League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([leagueId, userId])
+  @@unique([leagueId, teamId])
+  @@index([leagueId])
+  @@index([userId])
+}
+
+model Transfer {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  teamId      String   @db.ObjectId
+  playerInId  String   @db.ObjectId
+  playerOutId String   @db.ObjectId
+  gameweekId  String   @db.ObjectId
+  pricePaid   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  playerIn  Player   @relation("TransferIn", fields: [playerInId], references: [id], onDelete: Cascade)
+  playerOut Player   @relation("TransferOut", fields: [playerOutId], references: [id], onDelete: Cascade)
+  gameweek  Gameweek @relation(fields: [gameweekId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([gameweekId])
+  @@index([teamId, gameweekId])
+}
+
+model SquadGameweekSnapshot {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  teamId        String   @db.ObjectId
+  gameweekId    String   @db.ObjectId
+  playerId      String   @db.ObjectId
+  position      Position
+  isStarter     Boolean
+  benchOrder    Int?
+  isCaptain     Boolean  @default(false)
+  isViceCaptain Boolean  @default(false)
+
+  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  gameweek Gameweek @relation(fields: [gameweekId], references: [id], onDelete: Cascade)
+  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, gameweekId, playerId])
+  @@index([teamId, gameweekId])
+}
+
+model TeamGameweekScore {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  teamId         String @db.ObjectId
+  gameweekId     String @db.ObjectId
+  startersPoints Int
+  captainBonus   Int
+  benchPoints    Int    @default(0)
+  transferHit    Int    @default(0)
+  totalPoints    Int
+  breakdown      Json?
+
+  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  gameweek Gameweek @relation(fields: [gameweekId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, gameweekId])
+  @@index([gameweekId])
+}
+
+model ChipUsage {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  teamId         String   @db.ObjectId
+  chipType       ChipType
+  gameweekNumber Int
+  season         String
+  wildcardNumber Int?
+  squadBackup    Json?
+  usedAt         DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, chipType, season, wildcardNumber])
+  @@index([teamId])
+}
+
+model SyncLog {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  syncType     SyncType
+  startedAt    DateTime  @default(now())
+  finishedAt   DateTime?
+  success      Boolean   @default(false)
+  rowsChanged  Int       @default(0)
+  errorMessage String?
+
+  @@index([startedAt])
+  @@index([syncType])
+  @@index([success])
+}
+
+model AlertConfig {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  webhookUrl String    @default("")
+  alertType  AlertType
+  enabled    Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([alertType])
+}
+
+model Wallet {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  walletType   WalletType
+  userId       String?    @db.ObjectId
+  leagueId     String?    @db.ObjectId
+  balanceMinor Int        @default(0)
+  currency     String     @default("ETB")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user          User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  league        League?       @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  ledgerEntries LedgerEntry[]
+
+  @@index([walletType])
+  @@index([userId])
+  @@index([leagueId])
+}
+
+model LedgerEntry {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  walletId       String          @db.ObjectId
+  amountMinor    Int
+  direction      LedgerDirection
+  entryType      LedgerEntryType
+  referenceType  String
+  referenceId    String
+  idempotencyKey String
+  description    String?
+  createdAt      DateTime        @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@unique([idempotencyKey, walletId, direction, entryType])
+  @@index([walletId])
+  @@index([referenceType, referenceId])
+  @@index([idempotencyKey])
+  @@index([createdAt])
+}
+
+model Deposit {
+  id                 String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String        @db.ObjectId
+  amountMinor        Int
+  paymentProviderRef String?
+  status             DepositStatus @default(PENDING)
+  provider           String        @default("mock")
+  // Not @unique: Mongo unique indexes allow only one null; pending keys are set in app code.
+  idempotencyKey     String?
+  rejectionReason    String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([idempotencyKey])
+}
+
+model Withdrawal {
+  id                 String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String           @db.ObjectId
+  amountMinor        Int
+  paymentProviderRef String?
+  status             WithdrawalStatus @default(PENDING)
+  kycVerifiedAt      DateTime?
+  rejectionReason    String?
+  provider           String           @default("mock")
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}

@@ -1,0 +1,32 @@
+import { NavLink } from 'react-router-dom';
+import clsx from 'clsx';
+
+const tabs = [
+  { to: '/content/players', label: 'Players' },
+  { to: '/content/teams', label: 'Teams' },
+  { to: '/content/fixtures', label: 'Fixtures' },
+  { to: '/content/gameweeks', label: 'Gameweeks' },
+] as const;
+
+export function ContentSubNav() {
+  return (
+    <nav className="mb-4 flex gap-2 border-b border-fpl-gray-200">
+      {tabs.map((tab) => (
+        <NavLink
+          key={tab.to}
+          to={tab.to}
+          className={({ isActive }) =>
+            clsx(
+              'border-b-2 px-3 py-2 text-sm font-medium transition',
+              isActive
+                ? 'border-fpl-purple text-fpl-purple'
+                : 'border-transparent text-fpl-gray-500 hover:text-fpl-gray-900',
+            )
+          }
+        >
+          {tab.label}
+        </NavLink>
+      ))}
+    </nav>
+  );
+}

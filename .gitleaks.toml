@@ -1,0 +1,23 @@
+title = "FPL monorepo gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "database-url-with-password"
+description = "PostgreSQL connection string assigned to DATABASE_URL or DIRECT_URL"
+regex = '''(?i)(DATABASE_URL|DIRECT_URL)\s*=\s*postgresql://[^:]+:[^@\s]+@'''
+regexTarget = "line"
+
+[[rules]]
+id = "jwt-secret-assignment"
+description = "JWT secret env var with a long value"
+regex = '''(?i)(JWT_SECRET|JWT_REFRESH_SECRET)\s*=\s*[a-f0-9]{64,}'''
+regexTarget = "line"
+
+[allowlist]
+paths = [
+  '''\.env\.example$''',
+  '''load-tests/\.env\.example$''',
+  '''solution\.md$''',
+]

@@ -1,0 +1,17 @@
+{
+  "name": "next-fantasy-premier-league",
+  "private": true,
+  "scripts": {
+    "install:all": "npm ci && npm ci --prefix fpl-backend && npm ci --prefix fpl-frontend && npm ci --prefix fpl-admin-frontend",
+    "build": "npm run build --prefix fpl-backend && npm run build --prefix fpl-frontend && npm run build --prefix fpl-admin-frontend",
+    "test": "npm run test --prefix fpl-backend && npm run test --prefix fpl-frontend && npm run test --prefix fpl-admin-frontend",
+    "lint": "npm run lint --prefix fpl-frontend && npm run lint --prefix fpl-admin-frontend",
+    "audit:prod": "npm audit --omit=dev --prefix fpl-backend && npm audit --omit=dev --prefix fpl-frontend && npm audit --omit=dev --prefix fpl-admin-frontend",
+    "check:all": "npm run audit:prod && npm run lint && npm run test && npm run build",
+    "prepare": "husky",
+    "secrets:scan": "gitleaks detect --source . --verbose --redact --config .gitleaks.toml"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
